@@ -10,5 +10,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="2.5.2" />
+    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Json" Version="2.5.2" />
   </ItemGroup>
 </Project>

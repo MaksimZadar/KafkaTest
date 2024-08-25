@@ -1,6 +1,16 @@
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
+using Confluent.SchemaRegistry;
+using Confluent.SchemaRegistry.Serdes;
 
 namespace consumer;
+
+public class MyCoolMessage
+{
+    public string Message { get; set; } = string.Empty;
+    public DateTime CurrentTime { get; set; }
+}
+
 
 public class Worker : BackgroundService
 {
@@ -15,16 +25,22 @@ public class Worker : BackgroundService
     {
         var kafkaConfig = new ConsumerConfig()
         {
-            BootstrapServers = "localhost:19093",
+            BootstrapServers = "localhost:19092,localhost:19093,localhost:19094",
             GroupId = "demo-consumer-group",
         };
 
-        using var consumer = new ConsumerBuilder<Null, string>(kafkaConfig).Build();
-        consumer.Subscribe("demo");
+        using var consumer = new ConsumerBuilder<string, MyCoolMessage>(kafkaConfig)
+            .SetValueDeserializer(new JsonDeserializer<MyCoolMessage>().AsSyncOverAsync())
+            .SetErrorHandler((_, e) => _logger.LogError(e.Reason))
+            .SetKeyDeserializer(Deserializers.Utf8)
+            .Build();
+
+        consumer.Subscribe("demo-objects");
         while (!stoppingToken.IsCancellationRequested)
         {
             var cr = consumer.Consume(stoppingToken);
-            _logger.LogInformation("Message received: {Message}", cr.Message.Value);
+            var myCoolMessage = cr.Message.Value;
+            Console.WriteLine($"{myCoolMessage.CurrentTime} - {myCoolMessage.Message}");
         }
 
         await Task.CompletedTask;

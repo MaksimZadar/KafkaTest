@@ -1,4 +1,7 @@
 using Confluent.Kafka;
+using Confluent.Kafka.SyncOverAsync;
+using Confluent.SchemaRegistry;
+using Confluent.SchemaRegistry.Serdes;
 
 namespace producer;
 
@@ -21,10 +24,18 @@ public class Worker : BackgroundService
     {
         var kafkaConfig = new ProducerConfig()
         {
-            BootstrapServers = "localhost:19092"
+            BootstrapServers = "localhost:19092,localhost:19093,localhost:19094"
         };
 
-        using var producer = new ProducerBuilder<Null, string>(kafkaConfig).Build();
+        var schemaRegistryConfig = new SchemaRegistryConfig()
+        {
+            Url = "http://localhost:8081"
+        };
+
+        using var schemaRegistry = new CachedSchemaRegistryClient(schemaRegistryConfig);
+        using var producer = new ProducerBuilder<string, MyCoolMessage>(kafkaConfig)
+            .SetValueSerializer(new JsonSerializer<MyCoolMessage>(schemaRegistry))
+            .Build();
         while (!stoppingToken.IsCancellationRequested)
         {
             if (_logger.IsEnabled(LogLevel.Information))
@@ -33,10 +44,14 @@ public class Worker : BackgroundService
             }
 
             var _ = await producer.ProduceAsync(
-                "demo",
-                new Message<Null, string>
+                "demo-objects",
+                new Message<string, MyCoolMessage>
                 {
-                    Value = $"Hello World {DateTimeOffset.Now}"
+                    Value = new MyCoolMessage()
+                    {
+                        CurrentTime = DateTime.Now,
+                        Message = "Hello World!"
+                    }
                 },
                 stoppingToken);
 

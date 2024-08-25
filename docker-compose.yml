@@ -2,6 +2,8 @@ services:
   kafka1:
     image: confluentinc/cp-kafka
     container_name: kafka1
+    depends_on:
+      - zookeeper
     networks:
       - kafka-network
     ports:
@@ -9,14 +11,16 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: "OUTSIDE://localhost:19092,INSIDE://kafka1:9094"
-      KAFKA_LISTENERS: "OUTSIDE://0.0.0.0:19092,INSIDE://kafka1:9094"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "OUTSIDE:PLAINTEXT,INSIDE:PLAINTEXT"
-      KAFKA_INTER_BROKER_LISTENER_NAME: "INSIDE"
+      KAFKA_ADVERTISED_LISTENERS: "OUTSIDE://localhost:19092,PLAINTEXT://kafka1:9094"
+      KAFKA_LISTENERS: "OUTSIDE://0.0.0.0:19092,PLAINTEXT://kafka1:9094"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "OUTSIDE:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
   
   kafka2:
     image: confluentinc/cp-kafka
     container_name: kafka2
+    depends_on:
+      - zookeeper
     networks:
       - kafka-network
     ports:
@@ -24,25 +28,44 @@ services:
     environment:
       KAFKA_BROKER_ID: 2
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: "OUTSIDE://localhost:19093,INSIDE://kafka2:9095"
-      KAFKA_LISTENERS: "OUTSIDE://0.0.0.0:19093,INSIDE://kafka2:9095"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "OUTSIDE:PLAINTEXT,INSIDE:PLAINTEXT"
-      KAFKA_INTER_BROKER_LISTENER_NAME: "INSIDE"
+      KAFKA_ADVERTISED_LISTENERS: "OUTSIDE://localhost:19093,PLAINTEXT://kafka2:9095"
+      KAFKA_LISTENERS: "OUTSIDE://0.0.0.0:19093,PLAINTEXT://kafka2:9095"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "OUTSIDE:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
     
   kafka3:
     image: confluentinc/cp-kafka
     container_name: kafka3
     networks:
       - kafka-network
+    depends_on:
+      - zookeeper
     ports:
       - "19094:19094"
     environment:
       KAFKA_BROKER_ID: 3
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: "OUTSIDE://localhost:19094,INSIDE://kafka3:9096"
-      KAFKA_LISTENERS: "OUTSIDE://0.0.0.0:19094,INSIDE://kafka3:9096"
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "OUTSIDE:PLAINTEXT,INSIDE:PLAINTEXT"
-      KAFKA_INTER_BROKER_LISTENER_NAME: "INSIDE"
+      KAFKA_ADVERTISED_LISTENERS: "OUTSIDE://localhost:19094,PLAINTEXT://kafka3:9096"
+      KAFKA_LISTENERS: "OUTSIDE://0.0.0.0:19094,PLAINTEXT://kafka3:9096"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "OUTSIDE:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry
+    container_name: schemaregistry
+    networks:
+      - kafka-network
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:2181'
+      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
+      SCHEMA_REGISTRY_HOST_NAME: 'schemaregistry'
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka1:9094,kafka2:9095,kafka3:9096'
 
   zookeeper:
     image: confluentinc/cp-zookeeper
@@ -57,6 +80,10 @@ services:
   
   kafka-ui:
     container_name: kafka-ui
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
     networks:
       - kafka-network
     image: provectuslabs/kafka-ui:latest
@@ -64,6 +91,8 @@ services:
       - 8080:8080
     environment:
       DYNAMIC_CONFIG_ENABLED: 'true'
+      KAFKA_CLUSTERS_0_NAME: test
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka1:9094,kafka2:9095,kafka3:9096'
 
 networks:
   kafka-network:
