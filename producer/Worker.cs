@@ -24,7 +24,7 @@ public class Worker : BackgroundService
     {
         var kafkaConfig = new ProducerConfig()
         {
-            BootstrapServers = "localhost:19092,localhost:19093,localhost:19094"
+            BootstrapServers = "localhost:19092,localhost:19093,localhost:19094",
         };
 
         var schemaRegistryConfig = new SchemaRegistryConfig()
@@ -38,11 +38,7 @@ public class Worker : BackgroundService
             .Build();
         while (!stoppingToken.IsCancellationRequested)
         {
-            if (_logger.IsEnabled(LogLevel.Information))
-            {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            }
-
+            Console.WriteLine("Sending message...");
             var _ = await producer.ProduceAsync(
                 "demo-objects",
                 new Message<string, MyCoolMessage>

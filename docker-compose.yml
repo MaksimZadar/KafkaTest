@@ -93,11 +93,9 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
       KAFKA_CLUSTERS_0_NAME: test
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka1:9094,kafka2:9095,kafka3:9096'
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schemaregistry:8081
 
 networks:
   kafka-network:
+    name: kafka-network
     driver: bridge
-
-volumes:
-  kui_config:
-    driver: local
