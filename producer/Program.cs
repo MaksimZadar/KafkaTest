@@ -1,7 +1,7 @@
 using Confluent.Kafka;
 using KafkaFlow;
 using KafkaFlow.Producers;
-using KafkaFlow.Serializer;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +16,7 @@ builder.Services.AddKafka(k => k
     .UseConsoleLog()
     .AddCluster(c => c
         .WithBrokers(brokers)
+        .WithSchemaRegistry(config => config.Url = "localhost:8081")
         .CreateTopicIfNotExists(
             topicName: topic,
             numberOfPartitions: 3,
@@ -24,7 +25,7 @@ builder.Services.AddKafka(k => k
             .DefaultTopic(topic)
             .WithCompression(CompressionType.Gzip)
             .AddMiddlewares(m => m
-                .AddSerializer<NewtonsoftJsonSerializer>()
+                .AddSchemaRegistryJsonSerializer<DemoMessage>()
             )
         )
     )
@@ -42,11 +43,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 
-app.MapGet("/demo", async (IProducerAccessor producer) =>
+app.MapGet("/demo", async (IProducerAccessor producer, [FromQuery] string policyNumber = "NCI0001Q") =>
 {
     await producer[ProducerName].ProduceAsync("demo", new DemoMessage
     {
-        PolicyNumber = "NCI0001Q",
+        PolicyNumber = policyNumber,
         InvoiceYearMonth = DateTime.Now.AddMonths(-1)
     });
 })

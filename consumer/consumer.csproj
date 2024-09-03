@@ -9,7 +9,10 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Confluent.Kafka" Version="2.5.2" />
-    <PackageReference Include="Confluent.SchemaRegistry.Serdes.Json" Version="2.5.2" />
+    <PackageReference Include="KafkaFlow" Version="3.0.10" />
+    <PackageReference Include="KafkaFlow.LogHandler.Console" Version="3.0.10" />
+    <PackageReference Include="KafkaFlow.Microsoft.DependencyInjection" Version="3.0.10" />
+    <PackageReference Include="KafkaFlow.Serializer.NewtonsoftJson" Version="3.0.10" />
+    <PackageReference Include="KafkaFlow.Serializer.SchemaRegistry.ConfluentJson" Version="3.0.10" />
   </ItemGroup>
 </Project>
