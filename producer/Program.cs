@@ -54,10 +54,28 @@ app.MapGet("/demo", async (IProducerAccessor producer, [FromQuery] string policy
 .WithName("DemoMonthlyInvoice")
 .WithOpenApi();
 
+app.MapGet("/demo2", async (IProducerAccessor producer, [FromQuery] string message = "Hello World") =>
+{
+    await producer[ProducerName].ProduceAsync("demo2", "1", new DemoMessage2
+    {
+        Message = message,
+        Version = 1
+    });
+})
+.WithName("Demo2")
+.WithDescription("This will test a different message type and see how the consumer handles it.")
+.WithOpenApi();
+
 app.Run();
 
 class DemoMessage
 {
     public string PolicyNumber { get; set; } = string.Empty;
     public DateTime InvoiceYearMonth { get; set; }
+}
+
+class DemoMessage2
+{
+    public int Version { get; set; }
+    public string Message { get; set; } = string.Empty;
 }

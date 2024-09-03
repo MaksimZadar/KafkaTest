@@ -12,6 +12,8 @@ builder.Services.AddKafka(k => k
     .AddCluster(c => c
         .WithBrokers(bootstrapServers)
         .WithSchemaRegistry(config => config.Url = "localhost:8081")
+        .CreateTopicIfNotExists(topic, 3, 3)
+        .CreateTopicIfNotExists("demo2", 3, 3)
         .AddConsumer(consumer => consumer
             .Topic(topic)
             .WithGroupId(groupId)
@@ -23,6 +25,21 @@ builder.Services.AddKafka(k => k
                 .AddTypedHandlers(h => h
                     .WithHandlerLifetime(InstanceLifetime.Transient)
                     .AddHandler<DemoMessageHandler>()
+                    .WhenNoHandlerFound(c => Console.WriteLine("No handler found for message {0}", c.Message.Value))
+                )
+            )
+        )
+        .AddConsumer(consumer => consumer
+            .Topic("demo2")
+            .WithGroupId(groupId)
+            .WithAutoOffsetReset(AutoOffsetReset.Earliest)
+            .WithBufferSize(100)
+            .WithWorkersCount(3)
+            .AddMiddlewares(m => m
+                .AddSchemaRegistryJsonSerializer<DemoMessage2>()
+                .AddTypedHandlers(h => h
+                    .WithHandlerLifetime(InstanceLifetime.Transient)
+                    .AddHandler<DemoMessage2Handler>()
                     .WhenNoHandlerFound(c => Console.WriteLine("No handler found for message {0}", c.Message.Value))
                 )
             )
