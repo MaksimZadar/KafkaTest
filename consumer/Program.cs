@@ -21,6 +21,7 @@ builder.Services.AddKafka(k => k
             .AddMiddlewares(m => m
                 .AddSchemaRegistryJsonSerializer<DemoMessage>()
                 .AddTypedHandlers(h => h
+                    .WithHandlerLifetime(InstanceLifetime.Transient)
                     .AddHandler<DemoMessageHandler>()
                     .WhenNoHandlerFound(c => Console.WriteLine("No handler found for message {0}", c.Message.Value))
                 )
